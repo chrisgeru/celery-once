@@ -21,7 +21,8 @@ class QueueOnce(Task):
     abstract = True
     once = {
         'graceful': False,
-        'unlock_before_run': False
+        'unlock_before_run': False,
+        'lock_before_run': False
     }
 
     """
@@ -61,6 +62,9 @@ class QueueOnce(Task):
 
     def unlock_before_run(self):
         return self.once.get('unlock_before_run', False)
+
+    def lock_after_run(self):
+        return self.once.get('lock_after_run', False)
 
     def __init__(self, *args, **kwargs):
         self._signature = signature(self.run)
@@ -138,4 +142,5 @@ class QueueOnce(Task):
         # "unlock_before_run" option is False
         if not self.unlock_before_run():
             key = self.get_key(args, kwargs)
-            self.once_backend.clear_lock(key)
+            if not self.lock_after_run():
+                self.once_backend.clear_lock(key)
